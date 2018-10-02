@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Test drag&drop</title>
+	<style type="text/css">
+		.boxes {
+			width: 400px;
+			height: 50px;
+			box-sizing: border-box;
+			text-align: center;
+			margin: 25px auto;
+			border: 1px solid black;
+			line-height: 50px;
+			background-color: white;
+		}
+	</style>
+</head>
+<body>
+	<h1 style="text-align: center;">Test drag&drop</h1>
+
+	<div id="container">
+		<div class="boxes" id="block-1">block-1</div>
+		<div class="boxes" id="block-2">block-2</div>
+		<div class="boxes" id="block-3">block-3</div>
+		<div class="boxes" id="block-4">block-4</div>
+	</div>
+
+	<script type="text/javascript">
+		var dragObject = {
+			originalElem: undefined, //Перемещяемый элемент, на котором сработал onMouseDown()
+			draggedElem: undefined, //Клон перемещаемого элемента, который бегает за мышкой
+			coveredElem: undefined, //Элемент, перед которым будет вставлен перемещяемый
+			separatorElem: undefined, //Визуальный разделитель
+			downY: 0
+		};
+		var coveredElem;
+
+		function onMouseDown(e) {
+			dragObject.originalElem = e.target;
+			dragObject.draggedElem = dragObject.originalElem.cloneNode(true);
+			dragObject.draggedElem.id = 'block-dragged';
+			document.getElementById('container').appendChild(dragObject.draggedElem);
+			dragObject.draggedElem.style.position = 'absolute';
+			dragObject.draggedElem.style.left = '' + (e.target.offsetLeft - 10) + 'px';
+			//dragObject.draggedElem.style.top = '' + e.target.offsetTop + 'px';
+			dragObject.draggedElem.style.boxShadow = '5px 5px 10px grey';
+			//dragObject.downY = e.pageY;
+			moveDrag(e.pageY);
+		}
+
+		function moveDrag(pageY) {
+			dragObject.draggedElem.style.top = '' + pageY + 'px';
+		};
+
+		function onMouseMove(e) {
+			if (!dragObject.draggedElem) return;
+
+			moveDrag(e.pageY);
+
+
+			var newCoveredElem = document.elementFromPoint(e.clientX, e.clientY)
+			if (newCoveredElem && newCoveredElem.className === 'boxes') {
+				//newCoveredElem = newCoveredElem.closest('.boxes');
+				if (dragObject.coveredElem !== newCoveredElem) {
+					if (dragObject.coveredElem) {
+						dragObject.coveredElem.style.backgroundColor = 'white';
+						document.getElementById('container').removeChild(dragObject.separatorElem);
+					}
+					newCoveredElem.style.backgroundColor = '#eee';
+					dragObject.coveredElem = newCoveredElem;
+
+					dragObject.separatorElem = document.createElement('hr');
+					dragObject.separatorElem.style.width = '400px';
+					dragObject.separatorElem.style.height = '2px';
+					dragObject.separatorElem.style.margin = '0 auto -2px';
+					document.getElementById('container').insertBefore(dragObject.separatorElem, dragObject.coveredElem);
+				}
+			}
+		}
+
+		function onMouseUp(e) {
+			if (!dragObject.draggedElem) return;
+			var container = document.getElementById('container');
+			container.removeChild(dragObject.draggedElem);
+			container.insertBefore(dragObject.originalElem, dragObject.coveredElem);
+
+			if (dragObject.coveredElem) {
+				dragObject.coveredElem.style.backgroundColor = 'white';
+				document.getElementById('container').removeChild(dragObject.separatorElem);
+			}
+			dragObject.draggedElem = undefined;
+			dragObject.coveredElem = undefined;
+		}
+
+		var boxes = document.querySelectorAll('.boxes');
+		for (var i = 0; i < boxes.length; i++) {
+			boxes[i].addEventListener('mousedown', onMouseDown);
+			boxes[i].addEventListener('dragstart', function(e){console.log('dragstart preventDefault()'); e.preventDefault();});
+			boxes[i].addEventListener('selectstart', function(e){console.log('selectstart preventDefault()'); e.preventDefault();});
+
+		}
+		document.addEventListener('mousemove', onMouseMove);
+		document.addEventListener('mouseup', onMouseUp);
+	</script>
+</body>
+</html>
